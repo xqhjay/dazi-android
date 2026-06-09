@@ -18,7 +18,7 @@ class CharacterRepository @Inject constructor(
     private val gson = Gson()
 
     suspend fun getCharacterInfo(char: String): CharacterInfo? = withContext(Dispatchers.IO) {
-        characterDao.getCharacter(char)?.toModel()
+        characterDao.getCharacter(character = char)?.toModel()
     }
 
     suspend fun getCharactersByZone(zone: String, limit: Int = 50): List<CharacterInfo> = withContext(Dispatchers.IO) {
@@ -42,7 +42,7 @@ class CharacterRepository @Inject constructor(
     }
 
     suspend fun getCodeForCharacter(char: String, isWubi98: Boolean = false): String? = withContext(Dispatchers.IO) {
-        characterDao.getCharacter(char)?.let {
+        characterDao.getCharacter(character = char)?.let {
             if (isWubi98) it.wubi98 else it.wubi86
         }
     }

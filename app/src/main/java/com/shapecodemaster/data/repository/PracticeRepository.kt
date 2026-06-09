@@ -59,9 +59,9 @@ class PracticeRepository @Inject constructor(
     }
 
     suspend fun addMistake(char: String, correctCode: String, zone: String) = withContext(Dispatchers.IO) {
-        val existing = mistakeBookDao.getMistakeByChar(char)
+        val existing = mistakeBookDao.getMistakeByChar(character = char)
         if (existing != null) {
-            mistakeBookDao.incrementErrorCount(char)
+            mistakeBookDao.incrementErrorCount(character = char)
         } else {
             mistakeBookDao.insert(
                 MistakeBookEntity(
@@ -88,7 +88,7 @@ class PracticeRepository @Inject constructor(
     }
 
     suspend fun removeMistake(char: String) = withContext(Dispatchers.IO) {
-        mistakeBookDao.deleteByChar(char)
+        mistakeBookDao.deleteByChar(character = char)
     }
 
     fun getMistakeCount(): Flow<Int> {
