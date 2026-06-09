@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CharacterDao {
 
-    @Query("SELECT * FROM characters WHERE char = :char LIMIT 1")
+    @Query("SELECT * FROM characters WHERE char = :character LIMIT 1")
     suspend fun getCharacter(character: String): CharacterEntity?
 
     @Query("SELECT * FROM characters WHERE zone = :zone ORDER BY frequency DESC LIMIT :limit")

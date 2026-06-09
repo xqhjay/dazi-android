@@ -17,7 +17,7 @@ interface MistakeBookDao {
     @Query("SELECT * FROM mistake_book ORDER BY errorCount DESC, lastErrorTime DESC LIMIT :limit")
     suspend fun getMistakes(limit: Int = 50): List<MistakeBookEntity>
 
-    @Query("SELECT * FROM mistake_book WHERE char = :char LIMIT 1")
+    @Query("SELECT * FROM mistake_book WHERE char = :character LIMIT 1")
     suspend fun getMistakeByChar(character: String): MistakeBookEntity?
 
     @Query("SELECT COUNT(*) FROM mistake_book")
@@ -29,12 +29,12 @@ interface MistakeBookDao {
     @Update
     suspend fun update(mistake: MistakeBookEntity)
 
-    @Query("DELETE FROM mistake_book WHERE char = :char")
+    @Query("DELETE FROM mistake_book WHERE char = :character")
     suspend fun deleteByChar(character: String)
 
     @Query("DELETE FROM mistake_book")
     suspend fun deleteAll()
 
-    @Query("UPDATE mistake_book SET errorCount = errorCount + 1, lastErrorTime = :timestamp WHERE char = :char")
+    @Query("UPDATE mistake_book SET errorCount = errorCount + 1, lastErrorTime = :timestamp WHERE char = :character")
     suspend fun incrementErrorCount(character: String, timestamp: Long = System.currentTimeMillis())
 }
