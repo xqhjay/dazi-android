@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "字速默认权限",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "haptics:default",
+    "haptics:allow-vibrate",
+    "haptics:allow-impact",
+    "haptics:allow-notification",
+    "haptics:allow-selection"
+  ]
+}

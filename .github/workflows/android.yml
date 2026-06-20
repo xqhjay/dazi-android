@@ -1,0 +1,131 @@
+name: Build Android APK (arm64-v8a)
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platforms;android-34
+            build-tools;34.0.0
+            ndk;27.0.12077973
+
+      - name: Set NDK_HOME
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install npm dependencies
+        run: npm ci || npm install
+
+      - name: Run frontend tests
+        run: npm run test
+
+      - name: Generate app icon
+        run: |
+          node scripts/gen-icon.mjs
+          npx tauri icon app-icon.png
+
+      - name: Initialize Android project
+        run: npx tauri android init
+
+      - name: Restrict ABI to arm64-v8a
+        run: bash scripts/restrict-abi.sh
+
+      - name: Build Android APK
+        run: npx tauri android build --apk --target aarch64
+        env:
+          NDK_HOME: ${{ env.NDK_HOME }}
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+
+      - name: Find APK
+        id: find
+        run: |
+          set -e
+          APK=$(find src-tauri/gen/android -name "*.apk" -type f | head -1)
+          echo "apk_path=$APK" >> $GITHUB_OUTPUT
+          echo "Found APK: $APK"
+          ls -la "$APK"
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zisu-arm64-v8a-apk
+          path: ${{ steps.find.outputs.apk_path }}
+          if-no-files-found: error
+
+      - name: Upload to gofile.io
+        id: gofile
+        run: |
+          set -e
+          APK="${{ steps.find.outputs.apk_path }}"
+          echo "Uploading $APK to gofile.io..."
+          RESP=$(curl -sS -F "file=@${APK}" https://store1.gofile.io/uploadFile)
+          echo "Response: $RESP"
+          # 解析 JSON 提取下载页面链接
+          STATUS=$(echo "$RESP" | jq -r '.status')
+          if [ "$STATUS" = "ok" ]; then
+            PAGE=$(echo "$RESP" | jq -r '.data.downloadPage')
+            CODE=$(echo "$RESP" | jq -r '.data.code')
+            echo "download_page=$PAGE" >> $GITHUB_OUTPUT
+            echo "download_code=$CODE" >> $GITHUB_OUTPUT
+            echo "::notice::Gofile download link: $PAGE"
+          else
+            echo "::warning::Gofile upload failed: $RESP"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.gofile.outputs.download_page }}" ]; then
+            echo "✅ APK uploaded to gofile.io" >> $GITHUB_STEP_SUMMARY
+            echo "📥 Download: ${{ steps.gofile.outputs.download_page }}" >> $GITHUB_STEP_SUMMARY
+            echo "🔑 Code: \`${{ steps.gofile.outputs.download_code }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Gofile upload skipped or failed. APK available as workflow artifact." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Architecture: arm64-v8a only" >> $GITHUB_STEP_SUMMARY

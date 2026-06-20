@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+.DS_Store
+src-tauri/target
+src-tauri/gen/schemas
+src-tauri/Cargo.lock
+*.apk
+*.aab
+.env
+.env.*
+!.env.example
