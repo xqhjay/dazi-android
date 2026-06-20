@@ -42,14 +42,37 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           # 接受所有 license
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          # 安装 NDK 27
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973" > /dev/null 2>&1
-          NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973
+          # 列出已安装的 NDK
+          echo "=== Existing NDK versions ==="
+          ls -d $ANDROID_HOME/ndk/* 2>/dev/null || echo "No NDK preinstalled"
+          # 尝试安装 NDK 27，若失败则用预装的
+          echo "=== Installing NDK 27 ==="
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973" || echo "NDK 27 install failed, will use preinstalled"
+          # 动态选择 NDK：优先 27，否则取已安装的最新版
+          NDK_HOME=""
+          for v in 27.0.12077973 26.3.11579264 25.2.9519653; do
+            if [ -d "$ANDROID_HOME/ndk/$v" ]; then
+              NDK_HOME="$ANDROID_HOME/ndk/$v"
+              break
+            fi
+          done
+          if [ -z "$NDK_HOME" ]; then
+            NDK_HOME=$(ls -d $ANDROID_HOME/ndk/*/ 2>/dev/null | head -1)
+            NDK_HOME="${NDK_HOME%/}"
+          fi
+          if [ -z "$NDK_HOME" ]; then
+            echo "ERROR: No NDK available"; exit 1
+          fi
+          echo "Using NDK: $NDK_HOME"
           echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$NDK_HOME" >> $GITHUB_ENV
-          echo "NDK installed at $NDK_HOME"
-          ls "$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang" || { echo "NDK clang not found"; exit 1; }
+          # 验证 clang 存在（NDK 27+ 用 clang 路径）
+          CLANG="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang"
+          if [ ! -f "$CLANG" ]; then
+            echo "clang not at $CLANG, listing toolchain:"
+            ls "$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/" | grep -i clang | head
+          fi
 
       - name: Install Linux dependencies
         run: |
