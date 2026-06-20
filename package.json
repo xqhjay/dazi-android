@@ -1,0 +1,42 @@
+{
+  "name": "typing-speed-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "打字提速 - 移动端中文打字速度练习工具",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xqhjay/dazi-android.git"
+  },
+  "keywords": ["typing", "chinese", "android", "tauri"],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xqhjay/dazi-android/issues"
+  },
+  "homepage": "https://github.com/xqhjay/dazi-android#readme",
+  "dependencies": {
+    "@heroicons/vue": "^2.1.1",
+    "@tauri-apps/api": "^2.0.0-beta",
+    "@tauri-apps/plugin-sql": "^2.0.0-beta",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/tsconfig": "^0.5.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vue-tsc": "^2.0.6",
+    "@tauri-apps/cli": "^2.0.0-beta"
+  }
+}

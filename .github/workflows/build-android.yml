@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: sdkmanager "ndk;25.2.9519653" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0" --locked
+
+      - name: Build Android APK
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
+          NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
+        run: |
+          cargo tauri android build --apk --target aarch64
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-arm64
+          path: src-tauri/gen/android/app/build/outputs/apk/arm64/release/*.apk
+
+      - name: Upload APK to gofile.io
+        run: |
+          APK_PATH=$(ls src-tauri/gen/android/app/build/outputs/apk/arm64/release/*.apk | head -n 1)
+          echo "Uploading $APK_PATH"
+          RESPONSE=$(curl -s -F file=@"$APK_PATH" https://store.gofile.io/contents/uploadfile)
+          echo "$RESPONSE" > upload-response.json
+          cat upload-response.json
+
+      - name: Save upload response
+        uses: actions/upload-artifact@v4
+        with:
+          name: gofile-response
+          path: upload-response.json
