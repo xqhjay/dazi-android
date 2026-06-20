@@ -35,20 +35,21 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-34
-            build-tools;34.0.0
-            ndk;27.0.12077973
-
-      - name: Set NDK_HOME
+      - name: Setup Android SDK & NDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+          set -e
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          # 接受所有 license
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          # 安装 NDK 27
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973" > /dev/null 2>&1
+          NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973
+          echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_HOME" >> $GITHUB_ENV
+          echo "NDK installed at $NDK_HOME"
+          ls "$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-clang" || { echo "NDK clang not found"; exit 1; }
 
       - name: Install Linux dependencies
         run: |
@@ -103,7 +104,6 @@ jobs:
           echo "Uploading $APK to gofile.io..."
           RESP=$(curl -sS -F "file=@${APK}" https://store1.gofile.io/uploadFile)
           echo "Response: $RESP"
-          # 解析 JSON 提取下载页面链接
           STATUS=$(echo "$RESP" | jq -r '.status')
           if [ "$STATUS" = "ok" ]; then
             PAGE=$(echo "$RESP" | jq -r '.data.downloadPage')
