@@ -14,7 +14,7 @@ pub fn run() {
         .setup(|app| {
             // 初始化数据库
             let conn = db::open_db(app.handle())?;
-            app.manage(DbState(std::sync::Mutex::new(conn)));
+            app.handle().manage(DbState(std::sync::Mutex::new(conn)));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
