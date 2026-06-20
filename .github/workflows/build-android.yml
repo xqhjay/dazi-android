@@ -53,12 +53,12 @@ jobs:
           rustup target add aarch64-linux-android
           npm run tauri -- android init --ci
 
-      - name: Build Android APK (debug)
+      - name: Build Android APK (debug, arm64 only)
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
           NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
         run: |
-          npm run tauri -- android build --apk --debug --target aarch64
+          npm run tauri -- android build --apk --debug --target aarch64 --split-per-abi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
