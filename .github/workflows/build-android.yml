@@ -70,7 +70,7 @@ jobs:
         run: |
           APK_PATH=$(ls src-tauri/gen/android/app/build/outputs/apk/arm64/debug/*.apk | head -n 1)
           echo "Uploading $APK_PATH"
-          RESPONSE=$(curl -s -F file=@"$APK_PATH" https://store.gofile.io/contents/uploadfile)
+          RESPONSE=$(curl -s -F file=@"$APK_PATH" https://upload.gofile.io/uploadfile)
           echo "$RESPONSE" > upload-response.json
           cat upload-response.json
 
