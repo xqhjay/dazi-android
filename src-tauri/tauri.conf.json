@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "打字提速",
   "version": "1.0.0",
-  "identifier": "com.example.typingspeed",
+  "identifier": "com.dazitisu.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
